@@ -1,0 +1,16 @@
+## Chapter 3: Feature Engineering in Unity Catalog — Flashcards
+
+| # | Front (Question) | Back (Answer) |
+|---|-----------------|---------------|
+| 1 | Which client class is used for Feature Engineering in Unity Catalog? | FeatureEngineeringClient (from databricks.feature_engineering). Exam tip: it supersedes the legacy FeatureStoreClient (databricks.feature_store) for UC-registered feature tables. |
+| 2 | Method to create a brand-new UC feature table? | fe.create_table(name, primary_keys, df, schema, description). Requires at least one primary_keys column. Table name format: catalog.schema.table. |
+| 3 | Method to add/update data in an existing feature table? | fe.write_table(name, df, mode). mode='merge' upserts by primary key; mode='overwrite' replaces all rows. Exam tip: create_table = one-time definition, write_table = repeated updates. |
+| 4 | Which FeatureLookup parameter enables point-in-time correct joins and prevents leakage? | timestamp_lookup_key — matches the label's timestamp against the feature table's timestamp_key so only feature values available at that time are used. |
+| 5 | Key parameters of create_training_set()? | df (labels + keys), feature_lookups (list of FeatureLookup), label, exclude_columns. Call .load_df() on the returned TrainingSet to materialize the joined DataFrame. |
+| 6 | How does fe.log_model() differ from plain mlflow.log_model()? | fe.log_model() bundles the FeatureLookup metadata with the model artifact, enabling fe.score_batch() to auto-join features at inference time. Plain mlflow.log_model() stores no lookup metadata. |
+| 7 | Method for batch inference that auto-joins features using a logged model's stored lookups? | fe.score_batch(model_uri, df) — df only needs primary key columns; feature values are retrieved and joined automatically based on stored FeatureLookup metadata. |
+| 8 | Offline feature store vs. Online feature store — role of each? | Offline (UC Delta feature table) = training and batch scoring, full historical data. Online (e.g., Databricks Online Tables, published from the offline table) = low-latency key lookups for real-time serving. |
+| 9 | Main benefit of UC-registered feature tables over ad-hoc, per-notebook feature engineering? | Centralized discovery, governed access control, automatic lineage (which models/jobs consume a table), and consistent reuse — avoiding duplicated/inconsistent logic across teams. |
+| 10 | What is mandatory when calling fe.create_table()? | At least one primary_keys column (as a list). timestamp_key is optional and only needed if you require point-in-time lookups. |
+| 11 | How is feature table lineage surfaced in Unity Catalog? | Automatically, in the Catalog Explorer's Lineage tab — showing which notebooks, jobs, and registered models read from or wrote to the feature table. No manual tagging required. |
+| 12 | Why use exclude_columns in create_training_set() instead of just not selecting those columns later? | exclude_columns drops join/primary keys (and other non-feature columns) directly from the materialized training DataFrame so they are never accidentally passed to the model as features. The label column is handled separately via the label parameter. |
